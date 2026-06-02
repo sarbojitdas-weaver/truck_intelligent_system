@@ -1,0 +1,17 @@
+# Python env
+.venv/
+venv/
+
+# cache
+__pycache__/
+*.pyc
+
+# ML artifacts (DO NOT PUSH)
+*.pkl
+*.joblib
+*.h5
+*.so
+
+# data (optional)
+data/
+models/
