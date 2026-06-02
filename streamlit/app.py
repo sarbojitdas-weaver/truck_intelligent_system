@@ -137,14 +137,8 @@ if artifacts is not None:
             # 9. Task 10 Boundary Rules: Decision Matrix Mapping
             # 9. Recommendation Engine
             if score >= 70 and confidence >= 90:
-                recommendation = "STRONG BUY"
-                recommendation_icon = "🟢"
-            elif score >= 50 and confidence >= 85:
                 recommendation = "BUY"
                 recommendation_icon = "🟢"
-            elif score >= 40:
-                recommendation = "HOLD"
-                recommendation_icon = "🟡"
             else:
                 recommendation = "AVOID"
                 recommendation_icon = "🔴"
