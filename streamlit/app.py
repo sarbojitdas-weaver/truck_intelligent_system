@@ -2,7 +2,7 @@ import streamlit as st
 import numpy as np
 import pandas as pd
 import joblib
-
+from huggingface_hub import hf_hub_download
 # -------------------------------------------------------------
 # PAGE CONFIGURATION & STYLING
 # -------------------------------------------------------------
@@ -35,9 +35,15 @@ st.markdown("""
 @st.cache_resource
 def load_pipeline_artifacts():
     try:
-        return joblib.load('truck_model_artifacts.pkl')
-    except FileNotFoundError:
-        st.error("'truck_model_artifacts.pkl' not found. Please export your notebook pipeline artifacts first.")
+        model_path = hf_hub_download(
+            repo_id="sarbojit-weavers/truck_price_prediction",
+            filename="truck_model_artifacts.pkl"
+        )
+
+        return joblib.load(model_path)
+
+    except Exception as e:
+        st.error(f"Error loading model: {e}")
         return None
 
 artifacts = load_pipeline_artifacts()
