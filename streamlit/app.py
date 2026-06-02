@@ -37,8 +37,9 @@ def load_pipeline_artifacts():
     try:
         model_path = hf_hub_download(
             repo_id="sarbojit-weavers/truck_price_prediction",
-            filename="truck_model_artifacts.pkl"
+            filename="truck_price_prediction_model.pkl"
         )
+
 
         return joblib.load(model_path)
 
@@ -56,20 +57,27 @@ if artifacts is not None:
     upper_fence = artifacts['upper_fence']
     min_clipped_p = artifacts['min_clipped_p']
     max_clipped_p = artifacts['max_clipped_p']
-    best_overall_month = artifacts['best_overall_month']
+    best_month_by_brand_year = artifacts['best_month_by_brand_year']
     row_template = artifacts['row_template']
 
     # -------------------------------------------------------------
     # HEADER SECTION
     # -------------------------------------------------------------
     st.title(" Truck Price Intelligence System")
-    st.subheader("Multi-Model Machine Learning Valuation & Ensemble Scoring Engine")
     st.divider()
 
     # -------------------------------------------------------------
     # SIDEBAR CONTROL DECK (INPUT LAYER)
     # -------------------------------------------------------------
     st.sidebar.header(" Vehicle Parameter Matrix")
+
+    input_brand = st.sidebar.selectbox(
+        "Vehicle Brand",
+        sorted(best_month_by_brand_year['brand'].unique())
+    )
+
+
+
     
     # Standard widget structure to maintain continuous stream tracking
     input_year = st.sidebar.slider("Model Year", min_value=2000, max_value=2026, value=2018, step=1)
@@ -127,52 +135,104 @@ if artifacts is not None:
             confidence = round(max(0.0, min(100.0, (1.0 - relative_spread) * 100)), 1)
             
             # 9. Task 10 Boundary Rules: Decision Matrix Mapping
-            recommendation = "BUY" if score >= 50 and confidence >= 90.0 else "AVOID"
+            # 9. Recommendation Engine
+            if score >= 70 and confidence >= 90:
+                recommendation = "STRONG BUY"
+                recommendation_icon = "🟢"
+            elif score >= 50 and confidence >= 85:
+                recommendation = "BUY"
+                recommendation_icon = "🟢"
+            elif score >= 40:
+                recommendation = "HOLD"
+                recommendation_icon = "🟡"
+            else:
+                recommendation = "AVOID"
+                recommendation_icon = "🔴"
+
+        match = best_month_by_brand_year[
+            (best_month_by_brand_year['brand'] == input_brand) &
+            (best_month_by_brand_year['year'] == input_year)
+        ]
+
+        if not match.empty:
+            best_sell_time = match.iloc[0]['selling_window']
+
+        else:
+            brand_match = best_month_by_brand_year[
+                best_month_by_brand_year['brand'] == input_brand
+            ]
+
+            if not brand_match.empty:
+                best_sell_time = brand_match['selling_window'].mode()[0]
+            else:
+                best_sell_time = "N/A"
 
         # -------------------------------------------------------------
         # UI DISPLAY: OUTPUT LAYER & RESULTS MATRIX
         # -------------------------------------------------------------
-        st.header("📊 Asset Investment Intelligence Report")
-        
-        # Row Layout 1: Primary Action Recommendation Alert Callouts
-        col_rec, col_score, col_conf = st.columns(3)
-        
-        with col_rec:
-            if recommendation == "BUY":
-                st.markdown(f'<div class="metric-card buy-card"><h3>Strategic Recommendation</h3><h2>🟢 {recommendation}</h2></div>', unsafe_allow_html=True)
-            else:
-                st.markdown(f'<div class="metric-card avoid-card"><h3>Strategic Recommendation</h3><h2>🔴 {recommendation}</h2></div>', unsafe_allow_html=True)
-                
-        with col_score:
-            st.markdown(f'<div class="metric-card"><h3>Investment Rating Score</h3><h2>{score} / 100</h2></div>', unsafe_allow_html=True)
-            
-        with col_conf:
-            st.markdown(f'<div class="metric-card"><h3>Multi-Model Agreement Confidence</h3><h2>{confidence}%</h2></div>', unsafe_allow_html=True)
+        st.header("📊 Executive Investment Summary")
 
-        st.subheader("💰 Fleet Valuation Estimates (Converted to USD)")
-        
-        # Row Layout 2: Capital Valuations Metrics Cards
-        col_mkt, col_fut, col_prof, col_seas = st.columns(4)
-        col_mkt.metric("Current Fair Market Price", f"${market_price_usd:,.2f}")
-        col_fut.metric("Projected 3-Month Price", f"${future_price_usd:,.2f}")
-        col_prof.metric("Expected Gross Margin / Growth", f"${profit_usd:,.2f}", delta=f"${profit_usd:,.2f}")
-        col_seas.metric("Optimal Historical Exit Window", str(best_overall_month))
+        col1, col2, col3 = st.columns(3)
+
+        with col1:
+                st.metric(
+                        "Recommendation",
+                        f"{recommendation_icon} {recommendation}"
+                    )
+
+        with col2:
+                st.metric(
+                    "Model Confidence",
+                    f"{confidence}%"
+                )
+
+        with col3:
+                st.metric(
+                    "Opportunity Score",
+                    f"{score}/100"
+                )
+
+        st.divider()
+
+        st.subheader("💰 Market Valuation")
+
+        col1, col2, col3 = st.columns(3)
+
+        with col1:
+                st.metric(
+                    "Current Market Value",
+                    f"${market_price_usd:,.0f}"
+                )
+
+        with col2:
+                st.metric(
+                    "3-Month Forecast",
+                    f"${future_price_usd:,.0f}"
+                )
+
+        with col3:
+                st.metric(
+                    "Expected Gain",
+                    f"${profit_usd:,.2f}",
+                    delta=f"${profit_usd:,.2f}"
+                )
+
+        st.divider()
+
+        col1, col2 = st.columns(2)
+
+        with col1:
+                    st.metric(
+                        "Recommended Selling Window",
+                        best_sell_time
+                    )
+        with col2:
+                st.metric(
+                    "Forecast Trend",
+                    "📈 Appreciating" if profit_usd > 0 else "📉 Stable / Depreciating"
+                )
 
         st.divider()
         
-        # Diagnostic Insights Container Expanders
-        with st.expander("🔍 Model Verification Dashboard & System Diagnostics"):
-            st.write("Review variance across isolated pipeline architectures prior to consolidation:")
-            
-            individual_summary_data = []
-            for name, current, future in zip(best_models.keys(), current_preds, future_preds):
-                ind_profit_usd = (future - current) / exchange_rate
-                individual_summary_data.append({
-                    "Subsystem Module Layout": name,
-                    "Current Price Valuation ($)": f"${(current / exchange_rate):,.2f}",
-                    "Future Price Projection ($)": f"${(future / exchange_rate):,.2f}",
-                    "Calculated Alpha Delta ($)": f"${ind_profit_usd:,.2f}"
-                })
-            st.table(pd.DataFrame(individual_summary_data))
-    else:
-        st.info("💡 Adjust metrics on the left Sidebar control deck and click 'Run Intelligence Engine Evaluations' to generate your investment diagnostic report.")
+       
+  
