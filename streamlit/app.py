@@ -35,10 +35,11 @@ st.markdown("""
 @st.cache_resource
 def load_pipeline_artifacts():
     try:
-        model_path = hf_hub_download(
-            repo_id="sarbojit-weavers/truck_price_prediction",
-            filename="truck_price_prediction_model.pkl"
-        )
+        # model_path = hf_hub_download(
+        #     repo_id="sarbojit-weavers/price_prediction",
+        #     filename="truck_prediction_model.pkl"
+        # )
+        model_path="prediction_model.pkl"
 
 
         return joblib.load(model_path)
@@ -136,9 +137,13 @@ if artifacts is not None:
             
             # 9. Task 10 Boundary Rules: Decision Matrix Mapping
             # 9. Recommendation Engine
+        
             if score >= 70 and confidence >= 90:
                 recommendation = "BUY"
                 recommendation_icon = "🟢"
+            elif score <70 and confidence >=80 :
+                recommendation = "Monitor"
+                recommendation_icon = "🟡"
             else:
                 recommendation = "AVOID"
                 recommendation_icon = "🔴"
