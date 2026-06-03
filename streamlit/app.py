@@ -48,8 +48,9 @@ def load_pipeline_artifacts():
         
         model_path = hf_hub_download(
             repo_id="sarbojit-weavers/price_prediction",
-            filename="prediction_model.pkl"
+            filename="price_prediction_model.pkl"
         )
+        # model_path="price_prediction_model.pkl"
 
         artifacts = joblib.load(model_path)
 
