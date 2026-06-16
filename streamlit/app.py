@@ -1,6 +1,7 @@
 import streamlit as st
 import pandas as pd
 import numpy as np
+from huggingface_hub import hf_hub_download
 import os
 import pickle
 import sys
@@ -105,12 +106,20 @@ if "evaluated" not in st.session_state:
 
 @st.cache_resource
 def load_ml_engine():
-    if os.path.exists(MODEL_FILE):
-        try:
-            with open(MODEL_FILE, "rb") as f:
-                return pickle.load(f)
-        except: pass
-    return None
+    try:
+        model_path = hf_hub_download(
+            repo_id=HF_REPO_ID,
+            filename=MODEL_FILENAME
+        )
+
+        with open(model_path, "rb") as f:
+            engine = pickle.load(f)
+    
+    except Exception as e:
+        st.error(f"Loading Exception Encountered: {e}")
+        return None
+
+    return engine
 
 engine_instance = load_ml_engine()
 
@@ -127,15 +136,15 @@ MAKE_MODEL_MAP = {
     "Toyota": ["Camry", "Corolla"]
 }
 
-st.title("🎯 Underwriting & Vehicle Evaluation Dashboard")
+st.title("Used Car Dashboard")
 st.markdown("Select an asset context profile layout below to test decision workflows.")
 
 col1, col2 = st.columns(2)
 with col1:
-    selected_make = st.selectbox("🗂️ Step 1: Select Brand Manufacturer", options=sorted(list(MAKE_MODEL_MAP.keys())))
+    selected_make = st.selectbox("🗂️ Select Brand Manufacturer", options=sorted(list(MAKE_MODEL_MAP.keys())))
 
 with col2:
-    selected_model = st.selectbox("🚘 Step 2: Select Sub-Derivative Series", options=sorted(MAKE_MODEL_MAP[selected_make]))
+    selected_model = st.selectbox("🚘 Select Sub-Derivative Series", options=sorted(MAKE_MODEL_MAP[selected_make]))
 
 # Track whether selection parameters changed; reset evaluation state if fields shift
 if "last_selection" not in st.session_state:
@@ -149,7 +158,7 @@ if st.session_state.last_selection != (selected_make, selected_model):
 # 4. VARIABLE APPRAISAL FORM INPUT SEGMENT
 # ==============================================================================
 st.markdown("---")
-st.subheader("🛠️ Vehicle Physical Properties Configuration")
+st.subheader("Vehicle Appraisal Form")
 
 with st.form("appraisal_form"):
     c1, c2 = st.columns(2)
