@@ -1,0 +1,24 @@
+User Input
+(make, model, age, mileage, listing price)
+
+        ↓
+
+Price Prediction Model
+(What should market price be?)
+
+        ↓
+
+Business Scoring Engine
+
+1. Discount Score
+2. Mileage Health Score
+3. Popularity Score
+4. Liquidity Score
+
+        ↓
+
+BUY / AVOID
+
+        ↓
+
+Explanation Layer

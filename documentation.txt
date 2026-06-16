@@ -1,0 +1,6 @@
+| Truck Type            | Demand Score | Avg Days to Sell | Price Trend | Recommendation |
+| --------------------- | ------------ | ---------------- | ----------- | -------------- |
+| Volvo VNL             | High         | 18 days          | Stable      | Buy            |
+| Freightliner Cascadia | Very High    | 12 days          | Rising      | Strong Buy     |
+| Kenworth T680         | Low          | 95 days          | Falling     | Avoid          |
+
